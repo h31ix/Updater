@@ -11,6 +11,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -34,22 +36,22 @@ import org.json.simple.JSONValue;
  * If you are unsure about these rules, please read the plugin submission guidelines: http://goo.gl/8iU5l
  *
  * @author Gravity
- * @version 2.0
+ * @version 2.1
  */
 
 public class Updater {
 
-    private Plugin plugin;
-    private UpdateType type;
+    private final Plugin plugin;
+    private final UpdateType type;
     private String versionName;
     private String versionLink;
     private String versionType;
     private String versionGameVersion;
 
-    private boolean announce; // Whether to announce file downloads
+    private final boolean announce; // Whether to announce file downloads
 
     private URL url; // Connecting to RSS
-    private File file; // The plugin's file
+    private final File file; // The plugin's file
     private Thread thread; // Updater thread
 
     private int id = -1; // Project's Curse ID
@@ -63,8 +65,8 @@ public class Updater {
 
     private static final String[] NO_UPDATE_TAG = { "-DEV", "-PRE", "-SNAPSHOT" }; // If the version number contains one of these, don't update.
     private static final int BYTE_SIZE = 1024; // Used for downloading files
-    private YamlConfiguration config; // Config file
-    private String updateFolder;// The folder that downloads will be placed in
+    private final YamlConfiguration config; // Config file
+    private final String updateFolder;// The folder that downloads will be placed in
     private Updater.UpdateResult result = Updater.UpdateResult.SUCCESS; // Used for determining the outcome of the update process
 
     /**
@@ -155,8 +157,8 @@ public class Updater {
             try {
                 updaterConfigFile.createNewFile();
             } catch (final IOException e) {
-                plugin.getLogger().severe("The updater could not create a configuration in " + updaterFile.getAbsolutePath());
-                e.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, "The updater could not create a configuration in {0}", updaterFile.getAbsolutePath());
+                Logger.getLogger(Updater.class.getName()).log(Level.SEVERE, null, e);
             }
         }
         this.config = YamlConfiguration.loadConfiguration(updaterConfigFile);
@@ -172,8 +174,8 @@ public class Updater {
             try {
                 this.config.save(updaterConfigFile);
             } catch (final IOException e) {
-                plugin.getLogger().severe("The updater could not save the configuration in " + updaterFile.getAbsolutePath());
-                e.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, "The updater could not save the configuration in {0}", updaterFile.getAbsolutePath());
+                Logger.getLogger(Updater.class.getName()).log(Level.SEVERE, null, e);
             }
         }
 
@@ -192,9 +194,9 @@ public class Updater {
         try {
             this.url = new URL(Updater.HOST + Updater.QUERY + id);
         } catch (final MalformedURLException e) {
-            plugin.getLogger().severe("The project ID provided for updating, " + id + " is invalid.");
+            plugin.getLogger().log(Level.SEVERE, "The project ID provided for updating, {0} is invalid.", id);
             this.result = UpdateResult.FAIL_BADID;
-            e.printStackTrace();
+            Logger.getLogger(Updater.class.getName()).log(Level.SEVERE, null, e);
         }
 
         this.thread = new Thread(new UpdateRunnable());
@@ -203,6 +205,7 @@ public class Updater {
 
     /**
      * Get the result of the update process.
+     * @return result of the update process.
      */
     public Updater.UpdateResult getResult() {
         this.waitForThread();
@@ -211,6 +214,7 @@ public class Updater {
 
     /**
      * Get the latest version's release type (release, beta, or alpha).
+     * @return latest version's release type.
      */
     public String getLatestType() {
         this.waitForThread();
@@ -219,6 +223,7 @@ public class Updater {
 
     /**
      * Get the latest version's game version.
+     * @return latest version's game version..
      */
     public String getLatestGameVersion() {
         this.waitForThread();
@@ -227,6 +232,7 @@ public class Updater {
 
     /**
      * Get the latest version's name.
+     * @return latest version's name.
      */
     public String getLatestName() {
         this.waitForThread();
@@ -235,6 +241,7 @@ public class Updater {
 
     /**
      * Get the latest version's file link.
+     * @return latest version's file link.
      */
     public String getLatestFileLink() {
         this.waitForThread();
@@ -250,7 +257,7 @@ public class Updater {
             try {
                 this.thread.join();
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                Logger.getLogger(Updater.class.getName()).log(Level.SEVERE, null, e);
             }
         }
     }
@@ -274,7 +281,7 @@ public class Updater {
             final byte[] data = new byte[Updater.BYTE_SIZE];
             int count;
             if (this.announce) {
-                this.plugin.getLogger().info("About to download a new update: " + this.versionName);
+                this.plugin.getLogger().log(Level.INFO, "About to download a new update: {0}", this.versionName);
             }
             long downloaded = 0;
             while ((count = in.read(data, 0, Updater.BYTE_SIZE)) != -1) {
@@ -282,7 +289,7 @@ public class Updater {
                 fout.write(data, 0, count);
                 final int percent = (int) ((downloaded * 100) / fileLength);
                 if (this.announce && ((percent % 10) == 0)) {
-                    this.plugin.getLogger().info("Downloading update: " + percent + "% of " + fileLength + " bytes.");
+                    this.plugin.getLogger().log(Level.INFO, "Downloading update: {0}% of {1} bytes.", new int[]{percent, fileLength});
                 }
             }
             //Just a quick check to make sure we didn't leave any files from last time...
@@ -300,7 +307,7 @@ public class Updater {
             if (this.announce) {
                 this.plugin.getLogger().info("Finished updating.");
             }
-        } catch (final Exception ex) {
+        } catch (final IOException ex) {
             this.plugin.getLogger().warning("The auto-updater tried to download a new update, but was unsuccessful.");
             this.result = Updater.UpdateResult.FAIL_DOWNLOAD;
         } finally {
@@ -311,7 +318,7 @@ public class Updater {
                 if (fout != null) {
                     fout.close();
                 }
-            } catch (final Exception ex) {
+            } catch (final IOException ex) {
             }
         }
     }
@@ -329,9 +336,7 @@ public class Updater {
                 ZipEntry entry = e.nextElement();
                 File destinationFilePath = new File(zipPath, entry.getName());
                 destinationFilePath.getParentFile().mkdirs();
-                if (entry.isDirectory()) {
-                    continue;
-                } else {
+                if (!entry.isDirectory()) {
                     final BufferedInputStream bis = new BufferedInputStream(zipFile.getInputStream(entry));
                     int b;
                     final byte buffer[] = new byte[Updater.BYTE_SIZE];
@@ -348,12 +353,8 @@ public class Updater {
                         destinationFilePath.renameTo(new File(this.plugin.getDataFolder().getParent(), this.updateFolder + "/" + name));
                     }
                 }
-                entry = null;
-                destinationFilePath = null;
             }
-            e = null;
             zipFile.close();
-            zipFile = null;
 
             // Move any plugin data folders that were included to the right place, Bukkit won't do this for us.
             for (final File dFile : new File(zipPath).listFiles()) {
@@ -388,7 +389,7 @@ public class Updater {
         } catch (final IOException ex) {
             this.plugin.getLogger().warning("The auto-updater tried to unzip a new update file, but was unsuccessful.");
             this.result = Updater.UpdateResult.FAIL_DOWNLOAD;
-            ex.printStackTrace();
+            Logger.getLogger(Updater.class.getName()).log(Level.SEVERE, null, ex);
         }
         new File(file).delete();
     }
@@ -421,8 +422,8 @@ public class Updater {
                 }
             } else {
                 // The file's name did not contain the string 'vVersion'
-                final String authorInfo = this.plugin.getDescription().getAuthors().size() == 0 ? "" : " (" + this.plugin.getDescription().getAuthors().get(0) + ")";
-                this.plugin.getLogger().warning("The author of this plugin" + authorInfo + " has misconfigured their Auto Update system");
+                final String authorInfo = this.plugin.getDescription().getAuthors().isEmpty() ? "" : " (" + this.plugin.getDescription().getAuthors().get(0) + ")";
+                this.plugin.getLogger().log(Level.WARNING, "The author of this plugin {0} has misconfigured their Auto Update system", authorInfo);
                 this.plugin.getLogger().warning("File versions should follow the format 'PluginName vVERSION'");
                 this.plugin.getLogger().warning("Please notify the author of this error.");
                 this.result = Updater.UpdateResult.FAIL_NOVERSION;
@@ -462,7 +463,7 @@ public class Updater {
             final JSONArray array = (JSONArray) JSONValue.parse(response);
 
             if (array.size() == 0) {
-                this.plugin.getLogger().warning("The updater could not find any files for the project id " + this.id);
+                this.plugin.getLogger().log(Level.WARNING, "The updater could not find any files for the project id {0}", this.id);
                 this.result = UpdateResult.FAIL_BADID;
                 return false;
             }
@@ -483,7 +484,7 @@ public class Updater {
                 this.plugin.getLogger().warning("If you have not recently modified your configuration and this is the first time you are seeing this message, the site may be experiencing temporary downtime.");
                 this.result = UpdateResult.FAIL_DBO;
             }
-            e.printStackTrace();
+            Logger.getLogger(Updater.class.getName()).log(Level.SEVERE, null, e);
             return false;
         }
     }
