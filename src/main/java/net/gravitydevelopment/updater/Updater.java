@@ -461,7 +461,7 @@ public class Updater {
                             return false;
                         }
                     } catch (final NumberFormatException e) {
-                        this.plugin.getLogger().log(Level.WARNING, "The version indicated in plugin.yaml is not following a proper format. such as '1.0' or '1.0-SNAPSHOT'");
+                        this.plugin.getLogger().log(Level.WARNING, "The version indicated in plugin.yaml is not following a proper format such as '1.0' or '1.0-SNAPSHOT'");
                         this.plugin.getLogger().log(Level.WARNING, "The version should follow the format '1.0' or '1.3-SNAPSHOT' or '1.2.4-DEV'.");
                         this.plugin.getLogger().log(Level.WARNING, "Please notify the author of this error.");
                         this.result = Updater.UpdateResult.FAIL_PARSING_VERSION;
