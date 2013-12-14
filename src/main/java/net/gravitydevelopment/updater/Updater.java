@@ -3,7 +3,6 @@
  *
  * This class provides the means to safely and easily update a plugin, or check to see if it is updated using dev.bukkit.org
  */
-
 package net.gravitydevelopment.updater;
 
 import java.io.*;
@@ -23,22 +22,29 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 /**
- * Check dev.bukkit.org to find updates for a given plugin, and download the updates if needed.
+ * Check dev.bukkit.org to find updates for a given plugin, and download the
+ * updates if needed.
  * <p/>
- * <b>VERY, VERY IMPORTANT</b>: Because there are no standards for adding auto-update toggles in your plugin's config, this system provides NO CHECK WITH YOUR CONFIG to make sure the user has allowed auto-updating.
+ * <b>VERY, VERY IMPORTANT</b>: Because there are no standards for adding
+ * auto-update toggles in your plugin's config, this system provides NO CHECK
+ * WITH YOUR CONFIG to make sure the user has allowed auto-updating.
  * <br>
- * It is a <b>BUKKIT POLICY</b> that you include a boolean value in your config that prevents the auto-updater from running <b>AT ALL</b>.
+ * It is a <b>BUKKIT POLICY</b> that you include a boolean value in your config
+ * that prevents the auto-updater from running <b>AT ALL</b>.
  * <br>
- * If you fail to include this option in your config, your plugin will be <b>REJECTED</b> when you attempt to submit it to dev.bukkit.org.
+ * If you fail to include this option in your config, your plugin will be
+ * <b>REJECTED</b> when you attempt to submit it to dev.bukkit.org.
  * <p/>
- * An example of a good configuration option would be something similar to 'auto-update: true' - if this value is set to false you may NOT run the auto-updater.
+ * An example of a good configuration option would be something similar to
+ * 'auto-update: true' - if this value is set to false you may NOT run the
+ * auto-updater.
  * <br>
- * If you are unsure about these rules, please read the plugin submission guidelines: http://goo.gl/8iU5l
+ * If you are unsure about these rules, please read the plugin submission
+ * guidelines: http://goo.gl/8iU5l
  *
  * @author Gravity
  * @version 2.1
  */
-
 public class Updater {
 
     private final Plugin plugin;
@@ -63,18 +69,21 @@ public class Updater {
     private static final String QUERY = "/servermods/files?projectIds="; // Path to GET
     private static final String HOST = "https://api.curseforge.com"; // Slugs will be appended to this to get to the project's RSS feed
 
-    private static final String[] NO_UPDATE_TAG = { "-DEV", "-PRE", "-SNAPSHOT" }; // If the version number contains one of these, don't update.
+    private static final String[] NO_UPDATE_TAG = {"-DEV", "-PRE", "-SNAPSHOT"}; // If the version number contains one of these, don't update.
     private static final int BYTE_SIZE = 1024; // Used for downloading files
     private final YamlConfiguration config; // Config file
     private final String updateFolder;// The folder that downloads will be placed in
     private Updater.UpdateResult result = Updater.UpdateResult.SUCCESS; // Used for determining the outcome of the update process
 
     /**
-     * Gives the dev the result of the update process. Can be obtained by called getResult().
+     * Gives the dev the result of the update process. Can be obtained by called
+     * getResult().
      */
     public enum UpdateResult {
+
         /**
-         * The updater found an update, and has readied it to be loaded the next time the server restarts/reloads.
+         * The updater found an update, and has readied it to be loaded the next
+         * time the server restarts/reloads.
          */
         SUCCESS,
         /**
@@ -90,23 +99,33 @@ public class Updater {
          */
         FAIL_DOWNLOAD,
         /**
-         * For some reason, the updater was unable to contact dev.bukkit.org to download the file.
+         * For some reason, the updater was unable to contact dev.bukkit.org to
+         * download the file.
          */
         FAIL_DBO,
         /**
-         * When running the version check, the file on DBO did not contain the a version in the format 'vVersion' such as 'v1.0'.
+         * When running the version check, the file on DBO did not contain the a
+         * version in the format 'vVersion' such as 'v1.0'.
          */
         FAIL_NOVERSION,
         /**
-         * The id provided by the plugin running the updater was invalid and doesn't exist on DBO.
+         * The id provided by the plugin running the updater was invalid and
+         * doesn't exist on DBO.
          */
         FAIL_BADID,
         /**
-         * The server administrator has improperly configured their API key in the configuration
+         * The server administrator has improperly configured their API key in
+         * the configuration
          */
         FAIL_APIKEY,
         /**
-         * The updater found an update, but because of the UpdateType being set to NO_DOWNLOAD, it wasn't downloaded.
+         * The version indicated in plugin.yaml is not following a proper format
+         * such as '1.0' or '1.0-SNAPSHOT'
+         */
+        FAIL_PARSING_VERSION,
+        /**
+         * The updater found an update, but because of the UpdateType being set
+         * to NO_DOWNLOAD, it wasn't downloaded.
          */
         UPDATE_AVAILABLE
     }
@@ -115,16 +134,20 @@ public class Updater {
      * Allows the dev to specify the type of update that will be run.
      */
     public enum UpdateType {
+
         /**
-         * Run a version check, and then if the file is out of date, download the newest version.
+         * Run a version check, and then if the file is out of date, download
+         * the newest version.
          */
         DEFAULT,
         /**
-         * Don't run a version check, just find the latest update and download it.
+         * Don't run a version check, just find the latest update and download
+         * it.
          */
         NO_VERSION_CHECK,
         /**
-         * Get information about the version and the download size, but don't actually download anything.
+         * Get information about the version and the download size, but don't
+         * actually download anything.
          */
         NO_DOWNLOAD
     }
@@ -132,11 +155,14 @@ public class Updater {
     /**
      * Initialize the updater
      *
-     * @param plugin   The plugin that is checking for an update.
-     * @param id       The dev.bukkit.org id of the project
-     * @param file     The file that the plugin is running from, get this by doing this.getFile() from within your main class.
-     * @param type     Specify the type of update this will be. See {@link UpdateType}
-     * @param announce True if the program should announce the progress of new updates in console
+     * @param plugin The plugin that is checking for an update.
+     * @param id The dev.bukkit.org id of the project
+     * @param file The file that the plugin is running from, get this by doing
+     * this.getFile() from within your main class.
+     * @param type Specify the type of update this will be. See
+     * {@link UpdateType}
+     * @param announce True if the program should announce the progress of new
+     * updates in console
      */
     public Updater(Plugin plugin, int id, File file, UpdateType type, boolean announce) {
         this.plugin = plugin;
@@ -205,6 +231,7 @@ public class Updater {
 
     /**
      * Get the result of the update process.
+     *
      * @return result of the update process.
      */
     public Updater.UpdateResult getResult() {
@@ -214,6 +241,7 @@ public class Updater {
 
     /**
      * Get the latest version's release type (release, beta, or alpha).
+     *
      * @return latest version's release type.
      */
     public String getLatestType() {
@@ -223,6 +251,7 @@ public class Updater {
 
     /**
      * Get the latest version's game version.
+     *
      * @return latest version's game version..
      */
     public String getLatestGameVersion() {
@@ -232,6 +261,7 @@ public class Updater {
 
     /**
      * Get the latest version's name.
+     *
      * @return latest version's name.
      */
     public String getLatestName() {
@@ -241,6 +271,7 @@ public class Updater {
 
     /**
      * Get the latest version's file link.
+     *
      * @return latest version's file link.
      */
     public String getLatestFileLink() {
@@ -249,8 +280,9 @@ public class Updater {
     }
 
     /**
-     * As the result of Updater output depends on the thread's completion, it is necessary to wait for the thread to finish
-     * before allowing anyone to check the result.
+     * As the result of Updater output depends on the thread's completion, it is
+     * necessary to wait for the thread to finish before allowing anyone to
+     * check the result.
      */
     private void waitForThread() {
         if ((this.thread != null) && this.thread.isAlive()) {
@@ -395,7 +427,8 @@ public class Updater {
     }
 
     /**
-     * Check if the name of a jar is one of the plugins currently installed, used for extracting the correct files out of a zip.
+     * Check if the name of a jar is one of the plugins currently installed,
+     * used for extracting the correct files out of a zip.
      */
     private boolean pluginFile(String name) {
         for (final File file : new File("plugins").listFiles()) {
@@ -407,7 +440,8 @@ public class Updater {
     }
 
     /**
-     * Check to see if the program should continue by evaluation whether the plugin is already updated, or shouldn't be updated
+     * Check to see if the program should continue by evaluation whether the
+     * plugin is already updated, or shouldn't be updated
      */
     private boolean versionCheck(String title) {
         if (this.type != UpdateType.NO_VERSION_CHECK) {
@@ -419,6 +453,20 @@ public class Updater {
                     // We already have the latest version, or this build is tagged for no-update
                     this.result = Updater.UpdateResult.NO_UPDATE;
                     return false;
+                } else if (!this.hasTag(version)) {
+                    try {
+                        if (compareVersion(version, remoteVersion) >= 0) {
+                            // We already have the latest version
+                            this.result = Updater.UpdateResult.NO_UPDATE;
+                            return false;
+                        }
+                    } catch (final NumberFormatException e) {
+                        this.plugin.getLogger().log(Level.WARNING, "The version indicated in plugin.yaml is not following a proper format. such as '1.0' or '1.0-SNAPSHOT'");
+                        this.plugin.getLogger().log(Level.WARNING, "The version should follow the format '1.0' or '1.3-SNAPSHOT' or '1.2.4-DEV'.");
+                        this.plugin.getLogger().log(Level.WARNING, "Please notify the author of this error.");
+                        this.result = Updater.UpdateResult.FAIL_PARSING_VERSION;
+                        return false;
+                    }
                 }
             } else {
                 // The file's name did not contain the string 'vVersion'
@@ -434,7 +482,8 @@ public class Updater {
     }
 
     /**
-     * Evaluate whether the version number is marked showing that it should not be updated by this program
+     * Evaluate whether the version number is marked showing that it should not
+     * be updated by this program
      */
     private boolean hasTag(String version) {
         for (final String string : Updater.NO_UPDATE_TAG) {
@@ -487,6 +536,27 @@ public class Updater {
             Logger.getLogger(Updater.class.getName()).log(Level.SEVERE, null, e);
             return false;
         }
+    }
+
+    /**
+     * Compare two version
+     *
+     * <pre>@return -1 If version1 is lower than version2</pre>
+     * <pre>@return 0 If version1 is equal to version2</pre>
+     * <pre>@return 1 If version1 is greater than version2</pre>
+     */
+    private static int compareVersion(String version1, String version2) throws NumberFormatException {
+        String[] vals1 = version1.split("\\.");
+        String[] vals2 = version2.split("\\.");
+        int i = 0;
+        while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
+            i++;
+        }
+        if (i < vals1.length && i < vals2.length) {
+            int diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]));
+            return Integer.signum(diff);
+        }
+        return Integer.signum(vals1.length - vals2.length);
     }
 
     private class UpdateRunnable implements Runnable {
