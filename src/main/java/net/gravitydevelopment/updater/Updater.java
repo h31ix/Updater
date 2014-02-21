@@ -1,7 +1,7 @@
 /*
  * Updater for Bukkit.
  *
- * This class provides the means to safely and easily update a plugin, or check to see if it is updated using dev.bukkit.org
+ * This class provides the means to safely and easily update a plugin, or check to see if it is updated using https://api.curseforge.com
  */
 
 package net.gravitydevelopment.updater;
@@ -22,13 +22,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 /**
- * Check dev.bukkit.org to find updates for a given plugin, and download the updates if needed.
+ * Check https://api.curseforge.com to find updates for a given plugin, and download the updates if needed.
  * <p/>
  * <b>VERY, VERY IMPORTANT</b>: Because there are no standards for adding auto-update toggles in your plugin's config, this system provides NO CHECK WITH YOUR CONFIG to make sure the user has allowed auto-updating.
  * <br>
  * It is a <b>BUKKIT POLICY</b> that you include a boolean value in your config that prevents the auto-updater from running <b>AT ALL</b>.
  * <br>
- * If you fail to include this option in your config, your plugin will be <b>REJECTED</b> when you attempt to submit it to dev.bukkit.org.
+ * If you fail to include this option in your config, your plugin will be <b>REJECTED</b> when you attempt to submit it to https://api.curseforge.com.
  * <p/>
  * An example of a good configuration option would be something similar to 'auto-update: true' - if this value is set to false you may NOT run the auto-updater.
  * <br>
@@ -54,7 +54,6 @@ public class Updater {
     private Thread thread; // Updater thread
 
     private int id = -1; // Project's Curse ID
-    private String apiKey = null; // BukkitDev ServerMods API key
     private static final String TITLE_VALUE = "name"; // Gets remote file's title
     private static final String LINK_VALUE = "downloadUrl"; // Gets remote file's download link
     private static final String TYPE_VALUE = "releaseType"; // Gets remote file's release type
@@ -91,7 +90,7 @@ public class Updater {
          */
         FAIL_DOWNLOAD,
         /**
-         * For some reason, the updater was unable to contact dev.bukkit.org to download the file.
+         * For some reason, the updater was unable to contact https://api.curseforge.com to download the file.
          */
         FAIL_DBO,
         /**
@@ -102,10 +101,6 @@ public class Updater {
          * The id provided by the plugin running the updater was invalid and doesn't exist on DBO.
          */
         FAIL_BADID,
-        /**
-         * The server administrator has improperly configured their API key in the configuration.
-         */
-        FAIL_APIKEY,
         /**
          * The updater found an update, but because of the UpdateType being set to NO_DOWNLOAD, it wasn't downloaded.
          */
@@ -152,7 +147,7 @@ public class Updater {
      * Initialize the updater.
      *
      * @param plugin   The plugin that is checking for an update.
-     * @param id       The dev.bukkit.org id of the project.
+     * @param id       The https://api.curseforge.com id of the project.
      * @param file     The file that the plugin is running from, get this by doing this.getFile() from within your main class.
      * @param type     Specify the type of update this will be. See {@link UpdateType}
      * @param announce True if the program should announce the progress of new updates in console.
@@ -172,7 +167,6 @@ public class Updater {
         this.config.options().header("This configuration file affects all plugins using the Updater system (version 2+ - http://forums.bukkit.org/threads/96681/ )" + '\n'
                 + "If you wish to use your API key, read http://wiki.bukkit.org/ServerMods_API and place it below." + '\n'
                 + "Some updating systems will not adhere to the disabled value, but these may be turned off in their plugin's configuration.");
-        this.config.addDefault("api-key", "PUT_API_KEY_HERE");
         this.config.addDefault("disable", false);
 
         if (!updaterFile.exists()) {
@@ -201,13 +195,6 @@ public class Updater {
             this.result = UpdateResult.DISABLED;
             return;
         }
-
-        String key = this.config.getString("api-key");
-        if (key.equalsIgnoreCase("PUT_API_KEY_HERE") || key.equals("")) {
-            key = null;
-        }
-
-        this.apiKey = key;
 
         try {
             this.url = new URL(Updater.HOST + Updater.QUERY + id);
@@ -294,7 +281,7 @@ public class Updater {
     }
 
     /**
-     * Save an update from dev.bukkit.org into the server's update folder.
+     * Save an update from https://api.curseforge.com into the server's update folder.
      *
      * @param folder the updates folder location.
      * @param file the name of the file to save it as.
@@ -562,15 +549,9 @@ public class Updater {
 
             return true;
         } catch (final IOException e) {
-            if (e.getMessage().contains("HTTP response code: 403")) {
-                this.plugin.getLogger().severe("dev.bukkit.org rejected the API key provided in plugins/Updater/config.yml");
-                this.plugin.getLogger().severe("Please double-check your configuration to ensure it is correct.");
-                this.result = UpdateResult.FAIL_APIKEY;
-            } else {
-                this.plugin.getLogger().severe("The updater could not contact dev.bukkit.org for updating.");
-                this.plugin.getLogger().severe("If you have not recently modified your configuration and this is the first time you are seeing this message, the site may be experiencing temporary downtime.");
-                this.result = UpdateResult.FAIL_DBO;
-            }
+            this.plugin.getLogger().severe("The updater could not contact https://api.curseforge.com for updating.");
+            this.plugin.getLogger().severe("If you have not recently modified your configuration and this is the first time you are seeing this message, the site may be experiencing temporary downtime.");
+            this.result = UpdateResult.FAIL_DBO;
             this.plugin.getLogger().log(Level.SEVERE, null, e);
             return false;
         }
