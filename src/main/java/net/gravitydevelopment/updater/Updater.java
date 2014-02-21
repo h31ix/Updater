@@ -524,9 +524,6 @@ public class Updater {
             final URLConnection conn = this.url.openConnection();
             conn.setConnectTimeout(5000);
 
-            if (this.apiKey != null) {
-                conn.addRequestProperty("X-API-Key", this.apiKey);
-            }
             conn.addRequestProperty("User-Agent", Updater.USER_AGENT);
 
             conn.setDoOutput(true);
