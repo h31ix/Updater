@@ -541,7 +541,11 @@ public class Updater {
      * @return true if a file inside the plugins folder is named this.
      */
     private boolean pluginExists(String name) {
-        File[] plugins = listFilesOrError(new File("plugins"));
+        File pluginDirectory = this.file.getParentFile();
+        if (pluginDirectory == null) {
+            pluginDirectory = new File("plugins");
+        }
+        File[] plugins = listFilesOrError(pluginDirectory);
         for (final File file : plugins) {
             if (file.getName().equals(name)) {
                 return true;
