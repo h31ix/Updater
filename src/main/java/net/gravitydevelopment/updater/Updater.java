@@ -177,7 +177,11 @@ public class Updater {
         /**
          * A "release" file.
          */
-        RELEASE
+        RELEASE,
+        /**
+         * A file with an unknown release type.
+         */
+        UNKNOWN
     }
 
     /**
@@ -312,7 +316,7 @@ public class Updater {
                 }
             }
         }
-        return null;
+        return ReleaseType.UNKNOWN;
     }
 
     /**
